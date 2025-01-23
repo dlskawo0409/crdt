@@ -75,9 +75,9 @@ class LWWMap {
     // }
 
     set(key, value) {
-        console.log("b");
+        
         const realKey = this._toKey(key);
-        const register = this._data.get(realKey);
+        const register = this._data.get(realKey[0]);
         if (register) {
           register.set(value);
         } else {

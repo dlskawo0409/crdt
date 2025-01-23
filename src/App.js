@@ -14,16 +14,16 @@ import CodeEditor from "./components/CodeEditor.js";
 
 // When running OpenVidu locally, leave these variables empty
 // For other deployment type, configure them with correct URLs depending on your deployment
-let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
-// let APPLICATION_SERVER_URL = "";
-// let LIVEKIT_URL = "ws://ec2-3-35-216-33.ap-northeast-2.compute.amazonaws.com:8020/";
-let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
+// let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
+let APPLICATION_SERVER_URL = "";
+let LIVEKIT_URL = "";
+// let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
 configureUrls();
 
 function configureUrls() {
   if (!APPLICATION_SERVER_URL) {
       if (window.location.hostname === "localhost") {
-          APPLICATION_SERVER_URL = "http://localhost:8443/";
+          APPLICATION_SERVER_URL = "http://localhost:6080/";
       } else {
           APPLICATION_SERVER_URL = "https://" + window.location.hostname + ":8443/";
       }
@@ -184,7 +184,7 @@ function App() {
                           )
                       )}
                   </div>
-                  <CodeEditor room = {room}/>
+                  <CodeEditor room = {room} participantName ={participantName}/>
               </div>
           )}
       </>

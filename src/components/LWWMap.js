@@ -1,46 +1,76 @@
 import LWWRegister from './LWWRegister.js';
+import TreeMap from './TreeMap.js';
 class LWWMap {
-    constructor(state) {
-      this._data = new Map();
-  
+    constructor( participantName) {
+      this._data = new TreeMap();
+      this.participantName = participantName;
       // 초기 상태의 각 키에 대해 새 레지스터를 생성합니다.
-      if(state != null)
-      for (const [key, register] of Object.entries(state)) {
-        this._data.set(key, new LWWRegister(register));
-      }
+      // if(state != null)
+      // for (const [key, register] of Object.entries(state)) {
+      //   this._data.set(key, new LWWRegister(register));
+      // }
     }
     _toKey(key) {
         return Array.isArray(key) ? JSON.stringify(key) : key;
       }
-    get value() {
-        const value = {};
-        // 각 값이 해당 키의 레지스터 값으로 설정된 객체를 구축합니다.
-        for (const [key, register] of this._data.entries()) {
-          if (register.value !== null) value[key] = register.value;
-        }
-      
-        // 객체를 배열로 변환한 후 정렬
-        const sortedEntries = Object.entries(value).sort((a, b) => {
-          const keyA = a[0].split(',').map(Number); // 쉼표로 나누고 숫자 배열로 변환
-          const keyB = b[0].split(',').map(Number);
-      
-          // 2. 배열 길이가 같을 경우 각 요소를 순서대로 비교
-          for (let i = 0; i < keyA.length; i++) {
-            if (keyA[i] !== keyB[i]) {
-              return keyA[i] - keyB[i];
-            }
-          }
 
-          if (keyA.length !== keyB.length) {
-            return keyA.length - keyB.length;
-          }
-      
-      
-          return 0; // 완전히 동일한 경우
-        });
-      
-        return sortedEntries; // 정렬된 배열 반환
+      get text(){
+        let value = "";
+        for (const [key, register] of this._data.entries()) {
+          if (register.value !== null) value +=  register.value[1];
+        }
+        return value;
       }
+
+      get value(){
+        const value = {};
+    
+        for (const [key, register] of this._data.entries()) {
+        
+          if (register.value!== null) value[key] = register.value;
+        }
+        return value;
+      }
+
+
+    // get value() {
+    //     const value = {};
+    //     // 각 값이 해당 키의 레지스터 값으로 설정된 객체를 구축합니다.
+    //     for (const [key, register] of this._data.entries()) {
+    //       if (register.value !== null) value[key] = register.value;
+    //     }
+      
+    //     // 객체를 배열로 변환한 후 정렬
+    //     const sortedEntries = Object.entries(value).sort((a, b) => {
+    //       const keyA = a[0].split(',').map(Number); // 쉼표로 나누고 숫자 배열로 변환
+    //       const keyB = b[0].split(',').map(Number);
+      
+    //       // 2. 배열 길이가 같을 경우 각 요소를 순서대로 비교
+    //       for (let i = 0; i < keyA.length; i++) {
+    //         if (keyA[i] !== keyB[i]) {
+    //           return keyA[i] - keyB[i];
+    //         }
+    //       }
+
+    //       if (keyA.length !== keyB.length) {
+    //         return keyA.length - keyB.length;
+    //       }
+      
+      
+    //       return 0; // 완전히 동일한 경우
+    //     });
+      
+    //     return sortedEntries; // 정렬된 배열 반환
+    //   }
+
+    // get text() {
+    //   const value = "";
+    //   // 각 값이 해당 키의 레지스터 값으로 설정된 객체를 구축합니다.
+    //   for ( register of this.value()) {
+    //      value += register.value;
+    //   }
+    //   return value;
+    // }
       
     get state() {
       const state = {};
@@ -75,13 +105,13 @@ class LWWMap {
     // }
 
     set(key, value) {
-        
+
         const realKey = this._toKey(key);
-        const register = this._data.get(realKey[0]);
+        const register = this._data.get(realKey);
         if (register) {
           register.set(value);
         } else {
-          this._data.set(realKey, new LWWRegister([0, value]));
+          this._data.set(realKey, new LWWRegister([this.participantName,0, value]));
         }
       }
   
@@ -98,7 +128,7 @@ class LWWMap {
         local.merge(remote);
       } else {
         // 그렇지 않으면, 들어오는 상태와 함께 새로운 `LWWRegister`를 인스턴스화합니다.
-        this._data.set(key, new LWWRegister([0, remote]));
+        this._data.set(key, new LWWRegister([this.participantName ,0, remote]));
       }
     }
   }

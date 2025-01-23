@@ -5,12 +5,12 @@ import LSEQAllocator from "./LSEQAllocator"; // LSEQAllocator 클래스 파일 i
 import LWWMap from "./LWWMap";
 import LWWRegister from './LWWRegister.js';
 
-const CodeEditor = ({ room }) => {
+const CodeEditor = ({ room , participantName}) => {
   const [isRoomReady, setIsRoomReady] = useState(false);
   const start = 0;
   const end = 17;
   const lseq = useRef(new LSEQAllocator(end - 1)); // LSEQAllocator 인스턴스
-  const lWWMap = useRef(new LWWMap);
+  const lWWMap = useRef(new LWWMap(participantName));
   // const [lWWMapValue, setLWWMapVAlue]= useState(lWWMap.current.value)
   const [code, setCode] = useState(""); // 로컬 코드
 
@@ -21,16 +21,16 @@ const CodeEditor = ({ room }) => {
     var changeIndex = event.target.selectionStart -1; // 커서 위치
     var change = updatedCode[changeIndex];
     var left = lWWMap.current.value;
-    console.log(left);
+    console.log(left.slice(0));
     var message;
     //존재 하면
     if(left){
-
+        console.log(left[0]);
         lWWMap.current.set(left[0][0] , change);
-        console.log(lWWMap.current.get(left[0][0]));
+        console.log(lWWMap.current.get(left[0][0]).state);
         message = {
           key : left[0][0],
-          register: lWWMap.current.get(left[0][0])
+          register: lWWMap.current.get(left[0][0]).state
         }
         sendDataToRoom(message);
         // setLWWMapVAlue(lWWMap.current.value);
@@ -42,23 +42,23 @@ const CodeEditor = ({ room }) => {
 
 
 
-  const sendDataToRoom = ({message}) =>{
-      // 데이터 패킷 생성 및 전송
-      const packet = JSON.stringify({ message });
-      const encodedPacket = new TextEncoder().encode(packet);
-      room.localParticipant.publishData(encodedPacket, DataPacket_Kind.RELIABLE);
-  }
+  const sendDataToRoom = (message) => {
+    const packet = JSON.stringify(message); // 중첩 없이 직렬화
+    const encodedPacket = new TextEncoder().encode(packet);
+    room.localParticipant.publishData(encodedPacket, DataPacket_Kind.RELIABLE);
+  };
+  
 
     // 다른 사용자의 데이터 수신 처리
   useEffect(() => {
     const handleDataReceived = (payload, participant) => {
       const decodedMessage = new TextDecoder().decode(payload);
       const msg = JSON.parse(decodedMessage);
-
+      console.log(`Received change from ${participant.identity}:`, msg.key, msg.register);
       // 수신된 변경 사항을 반영
       lWWMap.current.merge(msg.key, msg.register);
-
-      console.log(`Received change from ${participant.identity}:`, msg.key, msg.register);
+      setCode(lWWMap.current.value);
+      
     };
 
     if (room) {

@@ -13,7 +13,6 @@ class LWWRegister {
     }
   
     merge(state) {
-      console.log(state);
       const [remoteParticipantName,remoteTimestamp] = state;
       const [localParticipantName, localTimestamp] = this.state;
       // 로컬 타임스탬프가 원격 타임스탬프보다 크면 들어오는 값을 무시

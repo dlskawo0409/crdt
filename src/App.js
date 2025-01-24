@@ -14,10 +14,10 @@ import CodeEditor from "./components/CodeEditor.js";
 
 // When running OpenVidu locally, leave these variables empty
 // For other deployment type, configure them with correct URLs depending on your deployment
-// let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
-let APPLICATION_SERVER_URL = "";
-let LIVEKIT_URL = "";
-// let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
+let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
+// let APPLICATION_SERVER_URL = "";
+// let LIVEKIT_URL = "";
+let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
 configureUrls();
 
 function configureUrls() {

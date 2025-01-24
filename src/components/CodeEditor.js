@@ -3,7 +3,7 @@ import { DataPacket_Kind, RoomEvent } from "livekit-client";
 import "./CodeEditor.css";
 import LSEQAllocator from "./LSEQAllocator"; // LSEQAllocator 클래스 파일 import
 import LWWMap from "./LWWMap";
-import LWWRegister from './LWWRegister.js';
+
 
 const CodeEditor = ({ room , participantName}) => {
   const [isRoomReady, setIsRoomReady] = useState(false);
@@ -11,35 +11,79 @@ const CodeEditor = ({ room , participantName}) => {
   const end = 17;
   const lseq = useRef(new LSEQAllocator(end - 1)); // LSEQAllocator 인스턴스
   const lWWMap = useRef(new LWWMap(participantName));
-  // const [lWWMapValue, setLWWMapVAlue]= useState(lWWMap.current.value)
   const [code, setCode] = useState(""); // 로컬 코드
 
   // 로컬 변경 사항 처리
   const handleCodeChange = (event) => {
 
     const updatedCode = event.target.value;
-    var changeIndex = event.target.selectionStart -1; // 커서 위치
-    var change = updatedCode[changeIndex];
-    var left = lWWMap.current.value;
-    console.log(left.slice(0));
-    var message;
-    //존재 하면
-    if(left){
-        console.log(left[0]);
-        lWWMap.current.set(left[0][0] , change);
-        console.log(lWWMap.current.get(left[0][0]).state);
-        message = {
-          key : left[0][0],
-          register: lWWMap.current.get(left[0][0]).state
-        }
-        sendDataToRoom(message);
-        // setLWWMapVAlue(lWWMap.current.value);
-    }
+    const indexes = indexOfChange(code, updatedCode);
 
-    // applyLocalChange(change);
+    const messages = []; // 반복문 외부에서 선언
+
+    indexes.forEach((index) => {
+      // console.log(index);
+      let message = null; // 기본값 설정
+      const values = lWWMap.current.value;
+      const left = values[index][0];
+      const right = values[index + 1][0];
+      const change = updatedCode[index];
+  
+      console.log(index);
+      if (right == `[${end}]`) {
+        let newIndex = JSON.parse(right);
+        while (lWWMap.current.has(newIndex)) {
+          newIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));
+          console.log(newIndex);
+        }
+        lWWMap.current.set(newIndex, change);
+        message = {
+          key: newIndex,
+          register: lWWMap.current.get(newIndex).state,
+        };
+      } else {
+        lWWMap.current.set(right, change);
+        message = {
+          key: right,
+          register: lWWMap.current.get(right).state,
+        };
+      }
+    
+      messages.push(message);
+    });
+    
+    // 모든 메시지를 처리
+    messages.forEach((message) => {
+      // console.log(message);
+      sendDataToRoom(message);
+    });
+    
     setCode(updatedCode);
+    var left = [0];
+    var right = [17];
+    var newIndex = [17];
+    // for(let i = 0; i<1000; i++){
+    //   while (lWWMap.current.has(newIndex)) {
+    //     newIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));
+    //     console.log(newIndex);
+    //     left = newIndex;
+    //   }
+    // }
   };
 
+  const indexOfChange = (before, after) => {
+    const indexes = [];
+    const maxLength = Math.max(before.length, after.length);
+  
+    for (let i = 0; i < maxLength; i++) {
+      // 두 문자열의 같은 인덱스 값이 다르거나, 한 문자열이 짧아 비교할 수 없는 경우
+      if (before[i] !== after[i]) {
+        indexes.push(i); // 다른 인덱스를 추가
+      }
+    }
+  
+    return indexes;
+  };
 
 
   const sendDataToRoom = (message) => {
@@ -54,10 +98,11 @@ const CodeEditor = ({ room , participantName}) => {
     const handleDataReceived = (payload, participant) => {
       const decodedMessage = new TextDecoder().decode(payload);
       const msg = JSON.parse(decodedMessage);
-      console.log(`Received change from ${participant.identity}:`, msg.key, msg.register);
+      // console.log(`Received change from ${participant.identity}:`, msg.key, msg.register);
       // 수신된 변경 사항을 반영
       lWWMap.current.merge(msg.key, msg.register);
-      setCode(lWWMap.current.value);
+      // console.log(lWWMap.current.text);
+      setCode(lWWMap.current.text);
       
     };
 
@@ -77,8 +122,8 @@ const CodeEditor = ({ room , participantName}) => {
   useEffect(() => {
     if (room) {
       setIsRoomReady(true);
-      lWWMap.current.set([0],[0,'']);
-      lWWMap.current.set([end],[0,'']);
+      lWWMap.current.set([0],'');
+      lWWMap.current.set([end],'');
     }
   }, [room]);
 

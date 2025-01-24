@@ -1,7 +1,6 @@
 class LSEQAllocator {
   constructor( base = 16) {
     this.base = base;
-    this.S = new Map();
     this.random = Math.random;
   }
 
@@ -10,54 +9,57 @@ class LSEQAllocator {
   }
 
   alloc(p, q) {
-    let depth = 0;
-    let interval = 0;
-
-    // Determine the depth where interval >= 1
-    while (interval < 1) {
-      depth++;
-      interval = this.prefix(q, depth) - this.prefix(p, depth) - 1;
-    }
+    const [interval, depth] = this.sub(p,q);
     const step = Math.min(this.computeBase(depth), interval);
-  
-    // Set random boolean for the depth if not already set
-    if (!this.S.has(depth)) {
-      const rand = Math.random() >= 0.5;
-      this.S.set(depth, rand);
-    }
+    // console.log("depth", depth, "interval", interval);
+    // console.log("step" , step);
 
     let id;
-    if (this.S.get(depth)) { // boundary+
-      const addVal = Math.floor(Math.random() * (step + 1)) + 1;
-      id = this.prefix(p, depth) + addVal;
-    } else { // boundary-
-      const subVal = Math.floor(Math.random() * (step + 1)) + 1;
-      id = this.prefix(q, depth) - subVal;
-    }
+    var val = Math.floor(Math.random() * (step)) +1;
+    let appnedId = depth === p.length ? 0 : p[p.length-1];
+    appnedId += val;
+    id = this.prefix(p, appnedId, depth);
 
-    return this.convertToArray(id, depth);
+    return id;
   }
 
-  prefix(id, depth) {
-    let result = 0;
-    for (let i = 0; i < depth; i++) {
-      if (i < id.length) {
-        result += id[i] << (8 * (depth - i - 1));
-      } else {
-        result += 0;
-      }
+  prefix(p, appendId, depth) {
+    let result = [];
+    for(let i = 0; i<depth; i++){
+      result[i] = p[i];
+    }
+    if(p.length === depth){
+      result[depth] = appendId;
+    }
+    else{
+      result[p.length-1] = appendId;
     }
     return result;
   }
 
-  convertToArray(id, depth) {
-    const array = [];
-    for (let i = 0; i < depth; i++) {
-      const shift = 8 * (depth - i - 1);
-      array.push((id >> shift) & 0xFF);
+
+  sub(p,q){ 
+    var interval = 0;
+    var depth = Math.min(p.length, q.length);
+    for(let i = 0; i<depth; i++){
+      // 둘 다 작으면
+      if(i < p.length && i< q.length){
+        var interval = q[i] - p[i] -1
+        if(interval !==0 ){
+          return [interval, i];
+        }
+      }
     }
-    return array;
+    var len = p.length-1; //2
+    // console.log("len", len);
+    interval = this.computeBase(len) -  p[len];
+    if(interval === 0 ){
+      len++;
+      interval = this.computeBase(len);
+    }
+    return [ interval , len];
   }
+
 }
 
 export default LSEQAllocator;

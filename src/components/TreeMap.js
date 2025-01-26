@@ -24,13 +24,15 @@ class TreeMap {
         if (!inner) {
           return []; // 빈 배열일 경우, 예: "[]"
         }
+        
+
         return inner.split(",").map(numStr => parseInt(numStr, 10));
       }
   
     set(key, value) {
       // 키 문자열을 숫자 배열로 파싱
       const parsedKey = this.parseKey(key);
-  
+      
       // 이진 탐색으로 삽입할 위치를 찾는다
       let low = 0;
       let high = this._entries.length;

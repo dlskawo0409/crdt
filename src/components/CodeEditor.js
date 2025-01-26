@@ -8,8 +8,8 @@ import LWWMap from "./LWWMap";
 const CodeEditor = ({ room , participantName}) => {
   const [isRoomReady, setIsRoomReady] = useState(false);
   const start = 0;
-  const end = 17;
-  const lseq = useRef(new LSEQAllocator(end - 1)); // LSEQAllocator 인스턴스
+  const end = 999999999999;
+  const lseq = useRef(new LSEQAllocator()); // LSEQAllocator 인스턴스
   const lWWMap = useRef(new LWWMap(participantName));
   const [code, setCode] = useState(""); // 로컬 코드
 
@@ -22,35 +22,35 @@ const CodeEditor = ({ room , participantName}) => {
     const messages = []; // 반복문 외부에서 선언
 
     indexes.forEach((index) => {
-      // console.log(index);
-      let message = null; // 기본값 설정
-      const values = lWWMap.current.value;
-      const left = values[index][0];
-      const right = values[index + 1][0];
-      const change = updatedCode[index];
-  
-      console.log(index);
-      if (right == `[${end}]`) {
-        let newIndex = JSON.parse(right);
-        while (lWWMap.current.has(newIndex)) {
-          newIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));
-          console.log(newIndex);
-        }
-        lWWMap.current.set(newIndex, change);
-        message = {
-          key: newIndex,
-          register: lWWMap.current.get(newIndex).state,
-        };
-      } else {
-        lWWMap.current.set(right, change);
-        message = {
-          key: right,
-          register: lWWMap.current.get(right).state,
-        };
-      }
+
+        let message = null; 
+        const values = lWWMap.current.value;
+        const left = values[index][0];
+        const right = values[index + 1][0];
+        const change = updatedCode[index];
+      
+        var changeIndex;
     
-      messages.push(message);
-    });
+        if (right == `[${end}]` || indexes.length !== 1) {
+          changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(end));
+          // console.log("changeIndex",changeIndex);
+        } else {
+          changeIndex = right;
+        }
+
+        // console.log("before set",lWWMap.current.get(changeIndex).state);
+        lWWMap.current.set(changeIndex, change);
+        // console.log(changeIndex,lWWMap.current.get(changeIndex).state);
+        message = {
+          key: changeIndex,
+          register: lWWMap.current.get(changeIndex).state,
+        };
+
+
+      
+        messages.push(message);
+      });
+
     
     // 모든 메시지를 처리
     messages.forEach((message) => {
@@ -59,16 +59,7 @@ const CodeEditor = ({ room , participantName}) => {
     });
     
     setCode(updatedCode);
-    var left = [0];
-    var right = [17];
-    var newIndex = [17];
-    // for(let i = 0; i<1000; i++){
-    //   while (lWWMap.current.has(newIndex)) {
-    //     newIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));
-    //     console.log(newIndex);
-    //     left = newIndex;
-    //   }
-    // }
+   
   };
 
   const indexOfChange = (before, after) => {
@@ -122,8 +113,10 @@ const CodeEditor = ({ room , participantName}) => {
   useEffect(() => {
     if (room) {
       setIsRoomReady(true);
-      lWWMap.current.set([0],'');
-      lWWMap.current.set([end],'');
+      // 초기 복붙이 늦어서
+      for(let i = 1; i<1500;++i){
+        lWWMap.current.set([i], '');
+      }
     }
   }, [room]);
 

@@ -1,21 +1,28 @@
 class LSEQAllocator {
   constructor( base = 16) {
-    this.base = base;
+    this.base = 999999999999;
     this.random = Math.random;
+    this.end = [999999999999];
   }
 
-  computeBase(depth) {
-    return this.base * Math.pow(2, depth);
-  }
+  // computeBase(depth) {
+  //   return this.base * Math.pow(2, depth);
+  // }
 
   alloc(p, q) {
+
+    if(q === this.end){
+      return this.prefix(p,1,p.length-1);
+    }
+
     const [interval, depth] = this.sub(p,q);
-    const step = Math.min(this.computeBase(depth), interval);
+    const step = Math.min(this.base, interval);
     // console.log("depth", depth, "interval", interval);
     // console.log("step" , step);
 
     let id;
-    var val = Math.floor(Math.random() * (step)) +1;
+    // var val = Math.floor(Math.random() * (step)) +1;
+    var val = 1;
     let appnedId = depth === p.length ? 0 : p[p.length-1];
     appnedId += val;
     id = this.prefix(p, appnedId, depth);
@@ -39,6 +46,7 @@ class LSEQAllocator {
 
 
   sub(p,q){ 
+    //depth 가 같으면 차이를,  다르면 depth 와 차이를 주는 함수
     var interval = 0;
     var depth = Math.min(p.length, q.length);
     for(let i = 0; i<depth; i++){
@@ -51,11 +59,11 @@ class LSEQAllocator {
       }
     }
     var len = p.length-1; //2
-    // console.log("len", len);
-    interval = this.computeBase(len) -  p[len];
+
+    interval = this.base -  p[len];
     if(interval === 0 ){
       len++;
-      interval = this.computeBase(len);
+      interval = this.base;
     }
     return [ interval , len];
   }

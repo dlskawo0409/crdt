@@ -3,21 +3,23 @@ import {
   // RemoteParticipant,
 //   RemoteTrack,
   // RemoteTrackPublication,
+  Participant,
+  RemoteParticipant,
   Room,
   RoomEvent
 } from "livekit-client";
 import "./App.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import VideoComponent from "./components/VideoComponent";
 import AudioComponent from "./components/AudioComponent";
 import CodeEditor from "./components/CodeEditor.js";
 
 // When running OpenVidu locally, leave these variables empty
 // For other deployment type, configure them with correct URLs depending on your deployment
-let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
-// let APPLICATION_SERVER_URL = "";
-// let LIVEKIT_URL = "";
-let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
+// let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
+let APPLICATION_SERVER_URL = "";
+let LIVEKIT_URL = "";
+// let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
 configureUrls();
 
 function configureUrls() {
@@ -43,7 +45,8 @@ function App() {
   const [localTrack, setLocalTrack] = useState(undefined);
   const [remoteTracks, setRemoteTracks] = useState([]);
 
-  const [participantName, setParticipantName] = useState("Participant" + Math.floor(Math.random() * 100));
+//   const [participantName, setParticipantName] = useState("Participant" + Math.floor(Math.random() * 100));
+  const [participantName, setParticipantName] = useState(null);
   const [roomName, setRoomName] = useState("Test Room");
 
   async function joinRoom() {
@@ -51,14 +54,20 @@ function App() {
       setRoom(room);
 
       room.on(
-          RoomEvent.TrackSubscribed,
-          (track, publication, participant) => {
-              setRemoteTracks((prev) => [
-                  ...prev,
-                  { trackPublication: publication, participantIdentity: participant.identity }
-              ]);
-          }
-      );
+        RoomEvent.TrackSubscribed,
+            (track, publication, participant) => {
+                setRemoteTracks((prev) => {
+
+                    return [
+                        ...prev,
+                        { trackPublication: publication, participantIdentity: participant.identity }
+                    ];
+                });
+            }
+        );
+    
+
+    
 
       room.on(RoomEvent.TrackUnsubscribed, (track, publication) => {
           setRemoteTracks((prev) => prev.filter((track) => track.trackPublication.trackSid !== publication.trackSid));
@@ -70,6 +79,8 @@ function App() {
     //   });
 
       try {
+         const name = await settingParticipantName(roomName);
+        setParticipantName(name);
           const token = await getToken(roomName, participantName);
 
           await room.connect(LIVEKIT_URL, token);
@@ -83,6 +94,35 @@ function App() {
       }
   }
 
+  async function settingParticipantName(roomName) {
+    try {
+      const room = new Room();
+      const tempToken = await getTempToken(roomName);
+      await room.connect(LIVEKIT_URL, tempToken);
+  
+      let participantName;
+      if (room.remoteParticipants.size > 0) {
+        const lastKey = Array.from(room.remoteParticipants.keys()).pop();
+        const lastNumber = parseInt(lastKey.replace(/[^0-9]/g, ''), 10);
+        participantName = "Participant" + (lastNumber + 1);
+      } else {
+        participantName = "Participant1";
+      }
+  
+      // 화면에 세팅
+      setParticipantName(participantName);
+  
+      // 결과값을 반환해주면, 호출한 쪽에서 await으로 받을 수 있음
+      return participantName;
+    } catch (error) {
+      console.error("Error in settingParticipantName:", error.message);
+      throw error;
+    }
+  }
+  
+    
+  
+
   async function leaveRoom() {
       await room?.disconnect();
 
@@ -91,15 +131,14 @@ function App() {
       setRemoteTracks([]);
   }
 
-  async function getToken(roomName, participantName) {
-      const response = await fetch(APPLICATION_SERVER_URL + "token", {
+  async function getTempToken(roomName, participantName) {
+      const response = await fetch(APPLICATION_SERVER_URL + "temp-token", {
           method: "POST",
           headers: {
               "Content-Type": "application/json"
           },
           body: JSON.stringify({
               roomName: roomName,
-              participantName: participantName
           })
       });
 
@@ -111,6 +150,27 @@ function App() {
       const data = await response.json();
       return data.token;
   }
+
+  async function getToken(roomName) {
+    const response = await fetch(APPLICATION_SERVER_URL + "token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            roomName: roomName,
+            participantName: participantName
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Failed to get token: ${error.errorMessage}`);
+    }
+
+    const data = await response.json();
+    return data.token;
+}
 
   return (
       <>
@@ -124,7 +184,7 @@ function App() {
                               e.preventDefault();
                           }}
                       >
-                          <div>
+                          {/* <div>
                               <label htmlFor="participant-name">Participant</label>
                               <input
                                   id="participant-name"
@@ -134,7 +194,7 @@ function App() {
                                   onChange={(e) => setParticipantName(e.target.value)}
                                   required
                               />
-                          </div>
+                          </div> */}
                           <div>
                               <label htmlFor="room-name">Room</label>
                               <input
@@ -149,7 +209,8 @@ function App() {
                           <button
                               className="btn btn-lg btn-success"
                               type="submit"
-                              disabled={!roomName || !participantName}
+                            //   disabled={!roomName || !participantName}
+                            disabled={!roomName}
                           >
                               Join!
                           </button>

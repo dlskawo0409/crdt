@@ -1,100 +1,124 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef , forwardRef ,useImperativeHandle } from "react";
 import { DataPacket_Kind, RoomEvent } from "livekit-client";
 import "./CodeEditor.css";
 import LSEQAllocator from "./LSEQAllocator"; // LSEQAllocator 클래스 파일 import
 import LWWMap from "./LWWMap";
+import { Editor } from "@monaco-editor/react";
 
-
-const CodeEditor = ({ room , participantName}) => {
+const CodeEditor = forwardRef(({ room, participantName }, ref) => {
   const [isRoomReady, setIsRoomReady] = useState(false);
   const start = 0;
   const end = 999999999999;
-  const lseq = useRef(new LSEQAllocator()); // LSEQAllocator 인스턴스
+  const lseq = useRef(new LSEQAllocator());
   const lWWMap = useRef(new LWWMap(participantName));
-  const [code, setCode] = useState(""); // 로컬 코드
+  const [code, setCode] = useState("");
+  const textAreaRef = useRef(null);
 
-  // 로컬 변경 사항 처리
-  const handleCodeChange = (event) => {
+  const handleEditorDidMount = (editor, monaco) => {
+    textAreaRef.current = editor; // editor 인스턴스를 저장
+  };
 
-    const updatedCode = event.target.value;
+  const handleCodeChange = (value, event) => {
+    const updatedCode = value
     const indexes = indexOfChange(code, updatedCode);
-
-    const messages = []; // 반복문 외부에서 선언
-
+    const messages = [];
+    // console.log("test" ,lseq.current.alloc(JSON.parse(`[1]`), JSON.parse(`[2]`)));
     indexes.forEach((index) => {
+      // console.log(index);
+      const values = lWWMap.current.value;
+     
+      const left = values[index][0];
+      const right = values[index + 1][0];
+      var change = updatedCode[index];
+      let changeIndex;
+      change =  change === undefined ? '' : change;
 
-        let message = null; 
-        const values = lWWMap.current.value;
-        const left = values[index][0];
-        const right = values[index + 1][0];
-        const change = updatedCode[index];
-      
-        var changeIndex;
-    
-        if (right == `[${end}]` || indexes.length !== 1) {
-          changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(end));
-          // console.log("changeIndex",changeIndex);
-        } else {
-          changeIndex = right;
-        }
+      // if (change === '\n'|| change === '\r') {
+      //   console.log("enter");
+      //   changeIndex = right;
+      // }
+      // else {
+      //   changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));
+      //   console.log(left, right, changeIndex);
+      // }
 
-        // console.log("before set",lWWMap.current.get(changeIndex).state);
-        lWWMap.current.set(changeIndex, change);
-        // console.log(changeIndex,lWWMap.current.get(changeIndex).state);
-        message = {
-          key: changeIndex,
-          register: lWWMap.current.get(changeIndex).state,
-        };
+  
+
+      // changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));
+      if (right === `[${end}]`) {
+        changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(end));
+      } else {
+        changeIndex = right;
+      }
 
 
-      
-        messages.push(message);
+      lWWMap.current.set(changeIndex, change);
+      // console.log(lWWMap.current.value);
+      console.log(changeIndex);
+      messages.push({
+        key: changeIndex,
+        register: lWWMap.current.get(changeIndex).state,
       });
 
-    
-    // 모든 메시지를 처리
+    });
+
     messages.forEach((message) => {
-      // console.log(message);
       sendDataToRoom(message);
     });
-    
-    setCode(updatedCode);
-   
+
+    setCode(lWWMap.current.text);
   };
 
   const indexOfChange = (before, after) => {
     const indexes = [];
     const maxLength = Math.max(before.length, after.length);
-  
     for (let i = 0; i < maxLength; i++) {
-      // 두 문자열의 같은 인덱스 값이 다르거나, 한 문자열이 짧아 비교할 수 없는 경우
       if (before[i] !== after[i]) {
-        indexes.push(i); // 다른 인덱스를 추가
+        indexes.push(i);
       }
     }
-  
     return indexes;
   };
 
-
   const sendDataToRoom = (message) => {
-    const packet = JSON.stringify(message); // 중첩 없이 직렬화
+    const packet = JSON.stringify(message);
     const encodedPacket = new TextEncoder().encode(packet);
     room.localParticipant.publishData(encodedPacket, DataPacket_Kind.RELIABLE);
   };
-  
 
-    // 다른 사용자의 데이터 수신 처리
+  const sendAll = () => {
+    for (const [key, value] of lWWMap.current.state) {
+      sendDataToRoom({
+        key: key,
+        register: value.state,
+      });
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    triggerSendAll: sendAll,
+  }));
+
   useEffect(() => {
     const handleDataReceived = (payload, participant) => {
       const decodedMessage = new TextDecoder().decode(payload);
       const msg = JSON.parse(decodedMessage);
-      // console.log(`Received change from ${participant.identity}:`, msg.key, msg.register);
-      // 수신된 변경 사항을 반영
-      lWWMap.current.merge(msg.key, msg.register);
+      // console.log(msg);
+      if (msg !== null) {
+        // const textArea = textAreaRef.current;
+        // const cursorStart = textArea.selectionStart;
+        // const cursorEnd = textArea.selectionEnd;
+
+        lWWMap.current.merge(msg.key, msg.register);
+        
+
+        // setTimeout(() => {
+        //   textArea.setSelectionRange(cursorStart, cursorEnd);
+        // }, 0);
+      }
       // console.log(lWWMap.current.text);
       setCode(lWWMap.current.text);
-      
+     
     };
 
     if (room) {
@@ -109,31 +133,27 @@ const CodeEditor = ({ room , participantName}) => {
   }, [room]);
 
 
-  // room 초기화 시 상태 플래그 활성화
   useEffect(() => {
     if (room) {
       setIsRoomReady(true);
-      // 초기 복붙이 늦어서
-      for(let i = 1; i<1500;++i){
-        lWWMap.current.set([i], '');
+    
+      for (let i = 1; i < 375; ++i) {
+       
+        lWWMap.current.set([i], "");
+        // lWWMap.current.set([i, 0], "");
       }
     }
   }, [room]);
 
   return (
-    <div className="code-editor">
-      <textarea
-        className="code-editor-textarea"
-        value={code}
-        onChange={handleCodeChange}
-        placeholder="Write your code here..."
-      ></textarea>
-      <div className="code-editor-preview">
-        <h3>Your Code:</h3>
-        <pre>{code}</pre>
-      </div>
-    </div>
+    <Editor
+      height="90vh"
+      defaultLanguage="javascript"
+      value={code}
+      onChange={handleCodeChange}
+      onMount={handleEditorDidMount} // 에디터 인스턴스 가져오기
+    />
   );
-};
+});
 
 export default CodeEditor;

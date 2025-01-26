@@ -16,19 +16,22 @@ class LSEQAllocator {
     }
 
     const [interval, depth] = this.sub(p,q);
-    const step = Math.min(this.base, interval);
-    // console.log("depth", depth, "interval", interval);
-    // console.log("step" , step);
-
+    // const step = Math.min(this.base, interval);
     let id;
     // var val = Math.floor(Math.random() * (step)) +1;
     var val = 1;
     let appnedId = depth === p.length ? 0 : p[p.length-1];
     appnedId += val;
+    // console.log("depth", depth, "interval", interval, "appendId", appnedId);
     id = this.prefix(p, appnedId, depth);
 
     return id;
   }
+  
+  allocDepth(p) {
+    return this.prefix(p,1,p.length);
+  }
+
 
   prefix(p, appendId, depth) {
     let result = [];
@@ -49,19 +52,21 @@ class LSEQAllocator {
     //depth 가 같으면 차이를,  다르면 depth 와 차이를 주는 함수
     var interval = 0;
     var depth = Math.min(p.length, q.length);
+
     for(let i = 0; i<depth; i++){
       // 둘 다 작으면
       if(i < p.length && i< q.length){
-        var interval = q[i] - p[i] -1
-        if(interval !==0 ){
+        var interval = q[i] - p[i]
+        if (interval > 1) {
+          // console.log(q[i],p[i], interval);
           return [interval, i];
         }
       }
     }
     var len = p.length-1; //2
-
-    interval = this.base -  p[len];
-    if(interval === 0 ){
+    interval = this.base - p[len];
+    
+    if(interval === 0 || interval === this.base ){
       len++;
       interval = this.base;
     }

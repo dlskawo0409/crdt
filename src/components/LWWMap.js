@@ -15,7 +15,7 @@ class LWWMap {
         let value = "";
         for (const [key, register] of this._data.entries()) {
 
-          if (register.value !== null) value +=  register.value;
+          if (register.value !== null && register.value !== undefined) value +=  register.value;
         }
         return value;
       }
@@ -32,10 +32,10 @@ class LWWMap {
       }
 
     get state() {
-      const state = {};
+      const state = [];
       // 각 값이 해당 키에서 레지스터의 전체 상태로 설정된 객체를 구축합니다.
       for (const [key, register] of this._data.entries()) {
-        if (register) state[key] = register.state;
+        if (register) state.push([key, register]);
       }
       return state;
     }

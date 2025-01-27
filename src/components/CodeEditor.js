@@ -13,14 +13,16 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
   const lWWMap = useRef(new LWWMap(participantName));
   const [code, setCode] = useState("");
   const textAreaRef = useRef(null);
-
+  const [cursorPosition, setCursorPosition] = useState(0);
+  
   const handleEditorDidMount = (editor, monaco) => {
     textAreaRef.current = editor; // editor 인스턴스를 저장
+    setCursorPosition(textAreaRef.selectionStart);
   };
 
   const handleCodeChange = (value, event) => {
     const updatedCode = value
-    const indexes = indexOfChange(code, updatedCode);
+    const indexes = 
     const messages = [];
     // console.log("test" ,lseq.current.alloc(JSON.parse(`[1]`), JSON.parse(`[2]`)));
     indexes.forEach((index) => {
@@ -54,7 +56,7 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
 
       lWWMap.current.set(changeIndex, change);
       // console.log(lWWMap.current.value);
-      console.log(changeIndex);
+      // console.log(changeIndex);
       messages.push({
         key: changeIndex,
         register: lWWMap.current.get(changeIndex).state,

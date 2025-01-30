@@ -5,10 +5,6 @@ class LSEQAllocator {
     this.end = [999999999999];
   }
 
-  // computeBase(depth) {
-  //   return this.base * Math.pow(2, depth);
-  // }
-
   alloc(p, q) {
 
     if(q === this.end){
@@ -16,7 +12,6 @@ class LSEQAllocator {
     }
 
     const [interval, depth] = this.sub(p,q);
-    // const step = Math.min(this.base, interval);
     let id;
     // var val = Math.floor(Math.random() * (step)) +1;
     var val = 1;

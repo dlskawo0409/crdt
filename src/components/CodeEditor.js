@@ -14,55 +14,74 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
   const [code, setCode] = useState("");
   const editorRef  = useRef(null);
   const ignoreChangeRef = useRef(false);
+  const beforeValues = useRef("");
+
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
+    const model = editor.getModel();
+    model.setEOL(monaco.editor.EndOfLineSequence.LF);
   };
 
   const handleCodeChange = (value, event) => {
 
-    const updatedCode = value
-    const [indexes,query ]= indexOfChange(code, value)
+    // console.log("text: ", lWWMap.current.text,"value : ",value);
+    console.log("text")
+    lWWMap.current.value.forEach(element => {
+      console.log(element);
+    });
+
+    console.log("value")
+    for (let i = 0; i < value.length; i++){
+      console.log(value[i]);
+    }
+
+    // console.log("before : " ,beforeValues.current," lwwmap : ", lWWMap.current.value);
+    // const [indexes, query] = findDifferences(beforeValues.current, lWWMap.current.value);
+    const [indexes, query] = indexOfChange(lWWMap.current.text, value);
     let messages = [];
-    console.log(indexes);
+    console.log("indexs",indexes);
+    // indexes.forEach((index) => console.log(lWWMap.current.value[index]));
     indexes.forEach((index) => {
       // if (ignoreChangeRef.current) {
       //   return;
       // }
 
       const values = lWWMap.current.value;
-      console.log(values);
       const left = values[index][0];
-      const right = values[index + 1][0];
-      var change = updatedCode[index];
+      let right = values[index + 1][0];
+      var change = value[index];
       let changeIndex;
 
       change = change === undefined ? '' : change;
-      if (change === '\n') { 
-        changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right)); 
-        lWWMap.current.set(changeIndex, '\r');
-        messages.push({
-          key: changeIndex,
-          register: lWWMap.current.get(changeIndex).state,
-        })
-        changeIndex = lseq.current.alloc(JSON.parse(changeIndex), JSON.parse(right));
-      }
-      else if (query === 'insert') {
+  
+
+      if (query === 'insert') {
         changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));    
       }
       else {
         changeIndex = right;
       }  
-
-        console.log(left, right, changeIndex, change);
-   
-      
-
+  
+      console.log("changeIndex", changeIndex, left, right);
       lWWMap.current.set(changeIndex, change);
       messages.push({
         key: changeIndex,
         register: lWWMap.current.get(changeIndex).state,
       });
       
+      // if (values[index + 1][1] === '\n') {
+      //   changeIndex = lseq.current.alloc(changeIndex, JSON.parse(right));
+      //   lWWMap.current.set(changeIndex, '\n');
+
+      //   messages.push({
+      //     key: changeIndex,
+      //     register: lWWMap.current.get(changeIndex).state,
+      //   });
+      // }
+
+      
+      // console.log(left, right, changeIndex, change);
+
       let jsonString = JSON.stringify(messages);
       let byteSize = new TextEncoder().encode(jsonString).length;
 
@@ -72,7 +91,7 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
       }
 
     });
-
+    beforeValues.current = lWWMap.current.value;
     sendDataToRoom({ messages:messages, left:0 });  
 
     setCode(lWWMap.current.text);
@@ -81,26 +100,51 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
 
   const indexOfChange = (before, after) => {
     const indexes = [];
-    // let one = false;
-
-    // if (Math.abs(before.length - after.length) === 1) {
-    //   one = true;
-    // }
+    const diff = [];
     const maxLength = Math.max(before.length, after.length);
+    let one = Math.abs(after.length - before.length) === 1;
+
+    // console.log(before.length, after.length);/
 
     for (let i = 0; i < maxLength; i++) {
       if (before[i] !== after[i]) {
-        if (after[i] === '\n') {
-          continue;
-        }
         indexes.push(i);
-        // if (one) {
-        //   break;
-        // }
+        diff.push(after[i]);
+        if (one) {
+          break;
+        }
       }
     }
+
+    console.log(diff);
+
     return [indexes, before.length > after.length ? 'delete' : 'insert' ];
   };
+
+  function findDifferences(before, after) {
+    const differences = [];
+
+    const maxLength = Math.max(before.length, after.length);
+    let one = Math.abs(after.length - before.length) === 1;
+    for (let i = 0; i < maxLength; i++) {
+        const item1 = before[i] || [];
+        const item2 = after[i] || [];
+
+        console.log(JSON.stringify(item1),JSON.stringify(item2), JSON.stringify(item1) !== JSON.stringify(item2))
+      
+        if (JSON.stringify(item1) !== JSON.stringify(item2)) {
+          differences.push(i);
+          if (one) {
+            break;
+          }
+            
+        }
+    }
+
+    return [differences, before.length > after.length ? 'delete' : 'insert'  ];
+}
+
+
 
   const sendDataToRoom = (message) => {
     const packet = JSON.stringify(message);
@@ -176,7 +220,7 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
         const oldText = editor.getValue(); 
         const model = editor.getModel();
     
-
+        // console.log(newText);
         if (model) {
           const oldText = model.getValue();
           // const indexes = indexOfChange(oldText, newText);
@@ -217,6 +261,8 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
 
     if (room) {
       room.on(RoomEvent.DataReceived, handleDataReceived);
+      beforeValues.current = lWWMap.current.value[0];
+
     }
 
     return () => {

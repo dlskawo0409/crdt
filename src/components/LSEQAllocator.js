@@ -63,6 +63,10 @@ class LSEQAllocator {
         }
       }
     }
+    if (p.length == q.length) {
+      return [this.base, p.length];
+    }
+
     var len = p.length-1; //2
     interval = this.base - p[len];
     

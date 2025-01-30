@@ -29,7 +29,16 @@ class LWWMap {
           if (register.value!== null)   value.push([key, register.value]);
         }
         return value;
+  }
+  
+    get allMessage() {
+      const messages = [];
+    
+      for (const [key, register] of this._data.entries()) {
+        if (register.value !== null) messages.push({ key:key, register:register.state });
       }
+      return messages;
+    }
 
     get state() {
       const state = [];

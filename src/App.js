@@ -18,8 +18,8 @@ import CodeEditor from "./components/CodeEditor.js";
 // For other deployment type, configure them with correct URLs depending on your deployment
 // let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
 // let APPLICATION_SERVER_URL = "";
-let APPLICATION_SERVER_URL = "https://192.168.219.166:6080/";
-let LIVEKIT_URL = "https://192-168-219-166.openvidu-local.dev:7443/";
+let APPLICATION_SERVER_URL = "https://i12a702.p.ssafy.io:8080/api/v1/";
+let LIVEKIT_URL = "wss://i12a702.p.ssafy.io:7443/";
 // let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
 
 configureUrls();

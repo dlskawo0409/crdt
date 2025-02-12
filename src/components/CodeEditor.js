@@ -23,91 +23,128 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
   };
 
   const handleCodeChange = (value, event) => {
-    const [indexes, query] = indexOfChange(lWWMap.current.text, value);
+    setCode(value);
+    let text = lWWMap.current.text;
+    const [indexes, changeLength] = indexOfChange(text, value);
     let messages = [];
+    let count = 1;
+
     indexes.forEach((index) => {
 
-      const values = lWWMap.current.value;
+      const values =lWWMap.current.value;
       const left = values[index][0];
       let right = values[index + 1][0];
+      // var change = text[index] === ' ' ? '': value[index];
       var change = value[index];
-      let changeIndex;
-
-      change = change === undefined ? '' : change;
-  
-      if (query === 'insert') {
-        changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));    
+      let changeIndex = right;
+      if(changeLength === -1){
+        change = null;
+        // console.log("delete");
+      }
+      if (changeLength >= 1) {
+        if(right !== end && (right === "" || right === undefined)){
+          changeIndex = right;
+        }
+        else{
+          changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right), changeLength);    
+        }
       }
       else {
+        // console.log("else", change);
         changeIndex = right;
       }  
   
-      // console.log("changeIndex", changeIndex, left, right);
+      // console.log("changeIndex", changeIndex, left, right, change);
+      
       lWWMap.current.set(changeIndex, change);
       messages.push({
         key: changeIndex,
         register: lWWMap.current.get(changeIndex).state,
       });
       
+
+      // console.log(lWWMap.current.value);
+      // console.log(left, right, changeIndex, change);
+
       let jsonString = JSON.stringify(messages);
       let byteSize = new TextEncoder().encode(jsonString).length;
 
-      if (byteSize >= 50000) {
-        sendDataToRoom({ messages: messages, left: 1 });
+      if (byteSize >= 1000) {
+        ++count;
+        const chatRequest = {
+          channelId: 5,
+          senderId: 1,
+          senderName: "dlskawo0409",
+          content: JSON.stringify(messages),
+        };
+
+        sendDataToRoom(chatRequest);
         messages = [];
       }
 
     });
+  
+    const chatRequest = {
+      channelId: 5,
+      senderId: 1,
+      senderName: "dlskawo0409",
+      content: JSON.stringify(messages),
+    };
 
-    sendDataToRoom({ messages:messages, left:0 });  
-
-    setCode(lWWMap.current.text);
-
+    sendDataToRoom(chatRequest);  
+    // setCode(lWWMap.current.text);
   };
 
   const indexOfChange = (before, after) => {
     const indexes = [];
-    const diff = [];
+ 
     const maxLength = Math.max(before.length, after.length);
-    let one = Math.abs(after.length - before.length) === 1;
+    let changeLength = after.length - before.length;
+
+    // 마지막이였던 건 바뀐 걸로 안치기 위해
+    let firstBefore = null;
 
     for (let i = 0; i < maxLength; i++) {
       if (before[i] !== after[i]) {
+        if(firstBefore === null){
+          firstBefore = before[i];
+        }
+        else if(firstBefore === after[i]){
+          break;
+        }
         indexes.push(i);
-        diff.push(after[i]);
-        if (one) {
+        if (Math.abs(changeLength) <= 1) {
           break;
         }
       }
     }
 
-    return [indexes, before.length > after.length ? 'delete' : 'insert' ];
+
+    return [indexes, changeLength];
   };
 
   function findDifferences(before, after) {
     const differences = [];
 
     const maxLength = Math.max(before.length, after.length);
-    let one = Math.abs(after.length - before.length) === 1;
+    let changeLength = after.length - before.length;
+
     for (let i = 0; i < maxLength; i++) {
         const item1 = before[i] || [];
         const item2 = after[i] || [];
-
-        console.log(JSON.stringify(item1),JSON.stringify(item2), JSON.stringify(item1) !== JSON.stringify(item2))
       
-        if (JSON.stringify(item1) !== JSON.stringify(item2)) {
+        if (item1 !== item2) {
+          
           differences.push(i);
-          if (one) {
+          if (Math.abs(changeLength) <= 1) {
             break;
           }
             
         }
     }
 
-    return [differences, before.length > after.length ? 'delete' : 'insert'  ];
+    return [differences, changeLength ];
 }
-
-
 
   const sendDataToRoom = (message) => {
     const packet = JSON.stringify(message);

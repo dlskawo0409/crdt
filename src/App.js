@@ -23,7 +23,7 @@ import CodeEditor from "./components/CodeEditor.js";
 // let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
 
 let APPLICATION_SERVER_URL = "https://i12a702.p.ssafy.io:8080/api/v1/";
-let LIVEKIT_URL = "wss://i12a702.p.ssafy.io:8443";
+let LIVEKIT_URL = "wss://i12a702.p.ssafy.io:8442";
 
 configureUrls();
 
@@ -96,7 +96,7 @@ function App() {
         try {
 
             // const token = await getToken(roomName, participantName);
-            const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkbHNrYXdvMDQwOUBuYXZlci5jb20iLCJpc3MiOiJBUElnY1NLMldic3B6aHMiLCJ2aWRlbyI6eyJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6IjUifSwic2lwIjp7fSwiZXhwIjoxNzM5MzY1ODA1LCJqdGkiOiJkbHNrYXdvMDQwOUBuYXZlci5jb20ifQ.EgVjhKPtM8jRJJywf1-VONnmOsKpwi9YI20XV9QHWUk";
+            const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkbHNrYXdvMDQwOUBuYXZlci5jb20iLCJpc3MiOiJBUElnY1NLMldic3B6aHMiLCJ2aWRlbyI6eyJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6IjUifSwic2lwIjp7fSwiZXhwIjoxNzM5MzcxMDI5LCJqdGkiOiJkbHNrYXdvMDQwOUBuYXZlci5jb20ifQ.uJHdjnEYp1nYSaGSXBQ46cIlbOiGusoYU8JrcjDX1Ao";
 
             await room.connect(LIVEKIT_URL, token);
 

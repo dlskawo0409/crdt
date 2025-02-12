@@ -18,9 +18,12 @@ import CodeEditor from "./components/CodeEditor.js";
 // For other deployment type, configure them with correct URLs depending on your deployment
 // let APPLICATION_SERVER_URL = "https://70.12.247.116:8443/";
 // let APPLICATION_SERVER_URL = "";
-let APPLICATION_SERVER_URL = "https://i12a702.p.ssafy.io:8080/api/v1/";
-let LIVEKIT_URL = "wss://i12a702.p.ssafy.io:7443/";
+// let APPLICATION_SERVER_URL = "https://i12a702.p.ssafy.io:8080/api/v1/";
+// let LIVEKIT_URL = "wss://i12a702.p.ssafy.io:7443/";
 // let LIVEKIT_URL="wss://70-12-247-116.openvidu-local.dev:7443";
+
+let APPLICATION_SERVER_URL = "https://i12a702.p.ssafy.io:8080/api/v1/";
+let LIVEKIT_URL = "wss://i12a702.p.ssafy.io:8443";
 
 configureUrls();
 
@@ -68,9 +71,9 @@ function App() {
                     }
                 }
                 
-                if (earliestParticipant.joinedAt > room.localParticipant.joinedAt) {
-                    CodeEditorRef.current.triggerSendAll();
-                }
+                // if (earliestParticipant.joinedAt > room.localParticipant.joinedAt) {
+                //     CodeEditorRef.current.triggerSendAll();
+                // }
 
                 setRemoteTracks((prev) => {
                     return [
@@ -92,7 +95,8 @@ function App() {
 
         try {
 
-            const token = await getToken(roomName, participantName);
+            // const token = await getToken(roomName, participantName);
+            const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkbHNrYXdvMDQwOUBuYXZlci5jb20iLCJpc3MiOiJBUElnY1NLMldic3B6aHMiLCJ2aWRlbyI6eyJyb29tSm9pbiI6dHJ1ZSwicm9vbSI6IjUifSwic2lwIjp7fSwiZXhwIjoxNzM5MzY1ODA1LCJqdGkiOiJkbHNrYXdvMDQwOUBuYXZlci5jb20ifQ.EgVjhKPtM8jRJJywf1-VONnmOsKpwi9YI20XV9QHWUk";
 
             await room.connect(LIVEKIT_URL, token);
 
@@ -211,6 +215,7 @@ function App() {
                         )}
                     </div>
                         <CodeEditor ref={CodeEditorRef} room={room} participantName={participantName} />
+  
                 </div>
             )}
         </>

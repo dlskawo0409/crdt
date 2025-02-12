@@ -23,28 +23,9 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
   };
 
   const handleCodeChange = (value, event) => {
-
-    // console.log("text: ", lWWMap.current.text,"value : ",value);
-    console.log("text")
-    lWWMap.current.value.forEach(element => {
-      console.log(element);
-    });
-
-    console.log("value")
-    for (let i = 0; i < value.length; i++){
-      console.log(value[i]);
-    }
-
-    // console.log("before : " ,beforeValues.current," lwwmap : ", lWWMap.current.value);
-    // const [indexes, query] = findDifferences(beforeValues.current, lWWMap.current.value);
     const [indexes, query] = indexOfChange(lWWMap.current.text, value);
     let messages = [];
-    console.log("indexs",indexes);
-    // indexes.forEach((index) => console.log(lWWMap.current.value[index]));
     indexes.forEach((index) => {
-      // if (ignoreChangeRef.current) {
-      //   return;
-      // }
 
       const values = lWWMap.current.value;
       const left = values[index][0];
@@ -54,7 +35,6 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
 
       change = change === undefined ? '' : change;
   
-
       if (query === 'insert') {
         changeIndex = lseq.current.alloc(JSON.parse(left), JSON.parse(right));    
       }
@@ -62,26 +42,13 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
         changeIndex = right;
       }  
   
-      console.log("changeIndex", changeIndex, left, right);
+      // console.log("changeIndex", changeIndex, left, right);
       lWWMap.current.set(changeIndex, change);
       messages.push({
         key: changeIndex,
         register: lWWMap.current.get(changeIndex).state,
       });
       
-      // if (values[index + 1][1] === '\n') {
-      //   changeIndex = lseq.current.alloc(changeIndex, JSON.parse(right));
-      //   lWWMap.current.set(changeIndex, '\n');
-
-      //   messages.push({
-      //     key: changeIndex,
-      //     register: lWWMap.current.get(changeIndex).state,
-      //   });
-      // }
-
-      
-      // console.log(left, right, changeIndex, change);
-
       let jsonString = JSON.stringify(messages);
       let byteSize = new TextEncoder().encode(jsonString).length;
 
@@ -91,7 +58,7 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
       }
 
     });
-    beforeValues.current = lWWMap.current.value;
+
     sendDataToRoom({ messages:messages, left:0 });  
 
     setCode(lWWMap.current.text);
@@ -104,8 +71,6 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
     const maxLength = Math.max(before.length, after.length);
     let one = Math.abs(after.length - before.length) === 1;
 
-    // console.log(before.length, after.length);/
-
     for (let i = 0; i < maxLength; i++) {
       if (before[i] !== after[i]) {
         indexes.push(i);
@@ -115,8 +80,6 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
         }
       }
     }
-
-    console.log(diff);
 
     return [indexes, before.length > after.length ? 'delete' : 'insert' ];
   };
@@ -220,38 +183,9 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
         const oldText = editor.getValue(); 
         const model = editor.getModel();
     
-        // console.log(newText);
         if (model) {
           const oldText = model.getValue();
-          // const indexes = indexOfChange(oldText, newText);
-          // indexes.forEach((index) => {
-            
-          // })
-  
-          // if (oldText !== newText) {
 
-          //   editor.executeEdits("", [
-          //     {
-          //       range: model.getFullModelRange(),
-          //       text: newText,
-          //     },
-          //   ]);
-          // }
-
-          // if (oldText !== newText) {
-          //   ignoreChangeRef.current = true; // 변경 이벤트 무시 플래그 설정
-    
-          //   editor.executeEdits("", [
-          //     {
-          //       range: model.getFullModelRange(),
-          //       text: newText,
-          //     },
-          //   ]);
-    
-          //   setTimeout(() => {
-          //     ignoreChangeRef.current = false; // 일정 시간 후 플래그 해제
-          //   }, 0);
-          // }
           setCode(lWWMap.current.text);
         }
       }
@@ -261,8 +195,6 @@ const CodeEditor = forwardRef(({ room, participantName }, ref) => {
 
     if (room) {
       room.on(RoomEvent.DataReceived, handleDataReceived);
-      beforeValues.current = lWWMap.current.value[0];
-
     }
 
     return () => {

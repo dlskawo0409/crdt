@@ -5,7 +5,7 @@ class LSEQAllocator {
     this.end = [999999999999];
   }
 
-  alloc(p, q) {
+  alloc(p, q, n) {
 
     if(q === this.end){
       return this.prefix(p,1,p.length-1);
@@ -14,7 +14,10 @@ class LSEQAllocator {
     const [interval, depth] = this.sub(p,q);
     let id;
     // var val = Math.floor(Math.random() * (step)) +1;
-    var val = 1;
+    var val = Math.floor(interval/2);
+    if(n > 1){
+      val = 1;
+    }
     let appnedId = depth === p.length ? 0 : p[p.length-1];
     appnedId += val;
     // console.log("depth", depth, "interval", interval, "appendId", appnedId);
@@ -65,7 +68,7 @@ class LSEQAllocator {
     var len = p.length-1; //2
     interval = this.base - p[len];
     
-    if(interval === 0 || interval === this.base ){
+    if(interval <= 1 || interval === this.base ){
       len++;
       interval = this.base;
     }
